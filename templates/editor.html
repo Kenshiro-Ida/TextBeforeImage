@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layer Editor</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Montserrat:400,700|Lobster|Oswald:400,700|Pacifico|Bebas+Neue|Dancing+Script|Playfair+Display:400,700|Raleway:400,700|Merriweather:400,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #fafbfc;
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar, .layer-controls, .form-group select, .form-group textarea, .form-group input[type="text"] {
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .editor-root {
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 370px;
+            background: #fff;
+            border-right: 1px solid #eee;
+            padding: 32px 24px 24px 24px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar h2 {
+            font-size: 1.2em;
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 1em;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tab-btn.active {
+            background: #fff;
+            color: #222;
+            border-bottom: 2px solid #222;
+        }
+        .layer-list {
+            margin-bottom: 18px;
+        }
+        .layer-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .layer-item.selected {
+            border: 2px solid #667eea;
+            background: #eef1fa;
+        }
+        .layer-item .layer-title {
+            font-weight: 500;
+            font-size: 1em;
+            color: #333;
+        }
+        .layer-item .remove-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .add-btn {
+            width: 100%;
+            background: #222;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .add-btn:hover {
+            background: #444;
+        }
+        .layer-controls {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 18px 14px;
+            margin-bottom: 18px;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            font-size: 0.98em;
+            font-weight: 500;
+            color: #444;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid #ccc;
+            border-radius: 6px;
+            font-size: 1.08em;
+            margin-top: 2px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            transition: border 0.2s;
+        }
+        .form-group textarea {
+            min-height: 40px;
+            resize: vertical;
+        }
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border: 1.5px solid #667eea;
+            outline: none;
+            background: #fff;
+        }
+        .form-group input[type="range"] {
+            width: 100%;
+            margin: 8px 0 12px 0;
+            accent-color: #667eea;
+            height: 3px;
+            background: #e0e1e3;
+            border-radius: 3px;
+        }
+        .form-group input[type="range"]::-webkit-slider-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(102,126,234,0.2);
+            cursor: pointer;
+        }
+        .form-group input[type="range"]:focus::-webkit-slider-thumb {
+            background: #222;
+        }
+        .form-group .slider-value {
+            float: right;
+            font-size: 0.98em;
+            color: #667eea;
+            font-weight: 500;
+        }
+        .form-group .color-input {
+            width: 40px;
+            height: 32px;
+            border: none;
+            background: none;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .form-group .color-value {
+            font-size: 0.95em;
+            color: #555;
+        }
+        .sidebar-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
+        .sidebar-actions button {
+            flex: 1;
+            padding: 12px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .reset-btn {
+            background: #f3f4f6;
+            color: #222;
+        }
+        .reset-btn:hover {
+            background: #e0e1e3;
+        }
+        .download-btn {
+            background: #222;
+            color: #fff;
+        }
+        .download-btn:hover {
+            background: #444;
+        }
+        .main-canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+        }
+        .canvas-container {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            padding: 18px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #editor-canvas {
+            border-radius: 10px;
+            background: #eee;
+            max-width: 100%;
+            max-height: 80vh;
+            width: auto;
+            height: auto;
+            display: block;
+        }
+        .leave-link {
+            display: inline-block;
+            margin: 24px 0 0 24px;
+            color: #222;
+            font-size: 1em;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .leave-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 1100px) {
+            .editor-root {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 18px 8px 8px 8px;
+            }
+            .main-canvas-area {
+                padding: 10px 0;
+            }
+            #editor-canvas {
+                width: 98vw;
+                height: 60vw;
+                max-width: 98vw;
+                max-height: 60vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="leave-link">&larr; Leave Editor</a>
+    <div class="editor-root">
+        <div class="sidebar">
+            <div class="tab-bar">
+                <button class="tab-btn active" id="tab-text">Text</button>
+                <button class="tab-btn" id="tab-img">Img</button>
+            </div>
+            <button class="add-btn" id="add-text-btn">+ Add New Text</button>
+            <div class="layer-list" id="text-layer-list"></div>
+            <div class="layer-controls" id="text-layer-controls" style="display:none;"></div>
+            <div class="sidebar-actions">
+                <button class="reset-btn" id="reset-btn">Reset</button>
+                <button class="download-btn" id="download-btn">Download</button>
+            </div>
+            <div id="export-status" class="status" style="margin-top: 10px;"></div>
+        </div>
+        <div class="main-canvas-area">
+            <div class="canvas-container">
+                <canvas id="editor-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    <script>
+    // --- CONFIG ---
+    const originalImageUrl = "{{ original_image }}";
+    const noBgImageUrl = "{{ no_bg_image }}";
+    // --- STATE ---
+    let textLayers = [];
+    let selectedLayer = null;
+    let layerVisibility = { original: true, nobg: true, text: true };
+    let dragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let dragImgBox = null;
+    // --- DOM ---
+    const canvas = document.getElementById('editor-canvas');
+    const ctx = canvas.getContext('2d');
+    const addTextBtn = document.getElementById('add-text-btn');
+    const textLayerList = document.getElementById('text-layer-list');
+    const textLayerControls = document.getElementById('text-layer-controls');
+    const resetBtn = document.getElementById('reset-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const exportStatus = document.getElementById('export-status');
+    // --- IMAGES ---
+    let originalImg = new window.Image();
+    let noBgImg = new window.Image();
+    originalImg.src = originalImageUrl;
+    noBgImg.src = noBgImageUrl;
+    // --- INIT ---
+    originalImg.onload = function() {
+        // Set canvas size to match the original image
+        canvas.width = originalImg.naturalWidth;
+        canvas.height = originalImg.naturalHeight;
+        renderLayerList();
+        renderCanvas();
+    };
+    noBgImg.onload = renderCanvas;
+    // --- LAYER DEFAULTS ---
+    function newTextLayer() {
+        return {
+            id: 'layer_' + Math.random().toString(36).substr(2, 9),
+            text: 'Text',
+            fontFamily: 'Arial',
+            fontSize: 64,
+            fontWeight: 700,
+            color: 'rgba(255,255,255,1)',
+            opacity: 1,
+            rotation: 0,
+            x: 50, // percent
+            y: 50, // percent
+        };
+    }
+    // --- DRAW IMAGE FITTED TO CANVAS ---
+    function drawImageCentered(img) {
+        if (!img.complete) return null;
+        const canvasAspect = canvas.width / canvas.height;
+        const imgAspect = img.width / img.height;
+        let drawWidth, drawHeight;
+        if (imgAspect > canvasAspect) {
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / imgAspect;
+        } else {
+            drawHeight = canvas.height;
+            drawWidth = canvas.height * imgAspect;
+        }
+        const x = (canvas.width - drawWidth) / 2;
+        const y = (canvas.height - drawHeight) / 2;
+        ctx.drawImage(img, x, y, drawWidth, drawHeight);
+        return { x, y, width: drawWidth, height: drawHeight };
+    }
+    // --- RENDER CANVAS ---
+    function renderCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw original and get its fitted box
+        let imgBox = { x: 0, y: 0, width: canvas.width, height: canvas.height };
+        if (layerVisibility.original) {
+            const box = drawImageCentered(originalImg);
+            if (box) imgBox = box;
+        }
+        // Draw text layers relative to imgBox
+        if (layerVisibility.text) {
+            textLayers.forEach(layer => drawTextLayer(layer, imgBox));
+        }
+        // Draw no-bg image on top, also fitted
+        if (layerVisibility.nobg) {
+            drawImageCentered(noBgImg);
+        }
+    }
+    // --- DRAW TEXT LAYER RELATIVE TO FITTED IMAGE ---
+    function drawTextLayer(layer, imgBox) {
+        ctx.save();
+        ctx.font = `${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
+        ctx.globalAlpha = layer.opacity;
+        ctx.fillStyle = layer.color;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        // Position relative to fitted image
+        const x = imgBox.x + (layer.x / 100) * imgBox.width;
+        const y = imgBox.y + (layer.y / 100) * imgBox.height;
+        ctx.translate(x, y);
+        ctx.rotate((layer.rotation * Math.PI) / 180);
+        // Multi-line support
+        const lines = layer.text.split('\n');
+        const lineHeight = layer.fontSize * 1.2;
+        const totalHeight = lineHeight * lines.length;
+        lines.forEach((line, i) => {
+            ctx.fillText(line, 0, -totalHeight/2 + i * lineHeight + lineHeight/2);
+        });
+        ctx.restore();
+    }
+    // --- LAYER LIST ---
+    function renderLayerList() {
+        textLayerList.innerHTML = '';
+        textLayers.forEach((layer, idx) => {
+            const div = document.createElement('div');
+            div.className = 'layer-item' + (selectedLayer === layer.id ? ' selected' : '');
+            div.innerHTML = `<span class="layer-title">Text ${idx + 1}: "${layer.text.length > 12 ? layer.text.slice(0,12)+'…' : layer.text}"</span>
+                <button class="remove-btn" title="Remove">&times;</button>`;
+            div.onclick = () => selectLayer(layer.id);
+            div.querySelector('.remove-btn').onclick = (e) => {
+                e.stopPropagation();
+                removeLayer(layer.id);
+            };
+            textLayerList.appendChild(div);
+        });
+        // Only render controls if selectedLayer changed
+        if (selectedLayer && (!renderLayerList.lastSelected || renderLayerList.lastSelected !== selectedLayer)) {
+            renderLayerControls(textLayers.find(l => l.id === selectedLayer));
+            renderLayerList.lastSelected = selectedLayer;
+        } else if (!selectedLayer) {
+            textLayerControls.style.display = 'none';
+            renderLayerList.lastSelected = null;
+        }
+    }
+    function selectLayer(id) {
+        selectedLayer = id;
+        renderLayerControls(textLayers.find(l => l.id === selectedLayer));
+        renderLayerList.lastSelected = selectedLayer;
+        renderLayerList();
+    }
+    function removeLayer(id) {
+        textLayers = textLayers.filter(l => l.id !== id);
+        if (selectedLayer === id) selectedLayer = null;
+        renderLayerList();
+        renderCanvas();
+    }
+    // --- LAYER CONTROLS ---
+    function renderLayerControls(layer) {
+        textLayerControls.style.display = 'block';
+        textLayerControls.innerHTML = `
+        <div class="form-group">
+            <label>Text</label>
+            <textarea id="ctrl-text">${layer.text}</textarea>
+        </div>
+        <div class="form-group">
+            <label>Font Family</label>
+            <select id="ctrl-font-family">
+                <option${layer.fontFamily==='Arial'?' selected':''}>Arial</option>
+                <option${layer.fontFamily==='Times New Roman'?' selected':''}>Times New Roman</option>
+                <option${layer.fontFamily==='Courier New'?' selected':''}>Courier New</option>
+                <option${layer.fontFamily==='Georgia'?' selected':''}>Georgia</option>
+                <option${layer.fontFamily==='Verdana'?' selected':''}>Verdana</option>
+                <option${layer.fontFamily==='Roboto'?' selected':''}>Roboto</option>
+                <option${layer.fontFamily==='Montserrat'?' selected':''}>Montserrat</option>
+                <option${layer.fontFamily==='Lobster'?' selected':''}>Lobster</option>
+                <option${layer.fontFamily==='Oswald'?' selected':''}>Oswald</option>
+                <option${layer.fontFamily==='Pacifico'?' selected':''}>Pacifico</option>
+                <option${layer.fontFamily==='Bebas Neue'?' selected':''}>Bebas Neue</option>
+                <option${layer.fontFamily==='Dancing Script'?' selected':''}>Dancing Script</option>
+                <option${layer.fontFamily==='Playfair Display'?' selected':''}>Playfair Display</option>
+                <option${layer.fontFamily==='Raleway'?' selected':''}>Raleway</option>
+                <option${layer.fontFamily==='Merriweather'?' selected':''}>Merriweather</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Font Size <span class="slider-value">${layer.fontSize}px</span></label>
+            <input type="range" id="ctrl-font-size" min="12" max="400" value="${layer.fontSize}">
+        </div>
+        <div class="form-group">
+            <label>Font Weight <span class="slider-value">${layer.fontWeight}</span></label>
+            <input type="range" id="ctrl-font-weight" min="100" max="900" step="100" value="${layer.fontWeight}">
+        </div>
+        <div class="form-group">
+            <label>Color</label>
+            <input type="color" id="ctrl-color" class="color-input" value="${rgbaToHex(layer.color)}">
+            <span class="color-value">${layer.color}</span>
+        </div>
+        <div class="form-group">
+            <label>Opacity <span class="slider-value">${Math.round(layer.opacity*100)}%</span></label>
+            <input type="range" id="ctrl-opacity" min="0" max="1" step="0.01" value="${layer.opacity}">
+        </div>
+        <div class="form-group">
+            <label>Rotation <span class="slider-value">${layer.rotation}&deg;</span></label>
+            <input type="range" id="ctrl-rotation" min="-180" max="180" value="${layer.rotation}">
+        </div>
+        <div class="form-group">
+            <label>Horizontal Pos. <span class="slider-value">${Math.round(layer.x)}%</span></label>
+            <input type="range" id="ctrl-x" min="0" max="100" value="${layer.x}">
+        </div>
+        <div class="form-group">
+            <label>Vertical Pos. <span class="slider-value">${Math.round(layer.y)}%</span></label>
+            <input type="range" id="ctrl-y" min="0" max="100" value="${layer.y}">
+        </div>
+        `;
+        // Attach events (only update canvas, not controls)
+        textLayerControls.querySelector('#ctrl-text').oninput = e => { layer.text = e.target.value; renderCanvas(); };
+        textLayerControls.querySelector('#ctrl-font-family').onchange = e => { layer.fontFamily = e.target.value; renderCanvas(); };
+        textLayerControls.querySelector('#ctrl-font-size').oninput = e => { layer.fontSize = +e.target.value; textLayerControls.querySelector('.slider-value').textContent = `${layer.fontSize}px`; renderCanvas(); };
+        textLayerControls.querySelector('#ctrl-font-weight').oninput = e => { layer.fontWeight = +e.target.value; textLayerControls.querySelectorAll('.slider-value')[1].textContent = `${layer.fontWeight}`; renderCanvas(); };
+        textLayerControls.querySelector('#ctrl-color').oninput = e => {
+            layer.color = hexToRgba(e.target.value, layer.opacity);
+            textLayerControls.querySelector('.color-value').textContent = layer.color;
+            renderCanvas();
+        };
+        textLayerControls.querySelector('#ctrl-opacity').oninput = e => {
+            layer.opacity = +e.target.value;
+            layer.color = hexToRgba(rgbaToHex(layer.color), layer.opacity);
+            textLayerControls.querySelectorAll('.slider-value')[2].textContent = `${Math.round(layer.opacity*100)}%`;
+            renderCanvas();
+        };
+        textLayerControls.querySelector('#ctrl-rotation').oninput = e => { layer.rotation = +e.target.value; textLayerControls.querySelectorAll('.slider-value')[3].textContent = `${layer.rotation}°`; renderCanvas(); };
+        textLayerControls.querySelector('#ctrl-x').oninput = e => { layer.x = +e.target.value; textLayerControls.querySelectorAll('.slider-value')[4].textContent = `${Math.round(layer.x)}%`; renderCanvas(); };
+        textLayerControls.querySelector('#ctrl-y').oninput = e => { layer.y = +e.target.value; textLayerControls.querySelectorAll('.slider-value')[5].textContent = `${Math.round(layer.y)}%`; renderCanvas(); };
+    }
+    // --- COLOR UTILS ---
+    function rgbaToHex(rgba) {
+        // rgba(255,255,255,1) => #ffffff
+        const m = rgba.match(/rgba?\((\d+), ?(\d+), ?(\d+)(?:, ?([\d.]+))?\)/);
+        if (!m) return '#000000';
+        return '#' + [1,2,3].map(i => (+m[i]).toString(16).padStart(2,'0')).join('');
+    }
+    function hexToRgba(hex, alpha=1) {
+        // #fff or #ffffff to rgba()
+        let c = hex.replace('#','');
+        if (c.length === 3) c = c.split('').map(x=>x+x).join('');
+        const r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+    function getFittedImageBox(img, canvas) {
+        const canvasAspect = canvas.width / canvas.height;
+        const imgAspect = img.width / img.height;
+        let drawWidth, drawHeight;
+        if (imgAspect > canvasAspect) {
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / imgAspect;
+        } else {
+            drawHeight = canvas.height;
+            drawWidth = canvas.height * imgAspect;
+        }
+        const x = (canvas.width - drawWidth) / 2;
+        const y = (canvas.height - drawHeight) / 2;
+        return { x, y, width: drawWidth, height: drawHeight };
+    }
+    // --- EVENTS ---
+    addTextBtn.onclick = () => {
+        const layer = newTextLayer();
+        textLayers.push(layer);
+        selectedLayer = layer.id;
+        renderLayerList();
+        renderCanvas();
+    };
+    resetBtn.onclick = () => {
+        if (!confirm('Reset all text layers?')) return;
+        textLayers = [];
+        selectedLayer = null;
+        renderLayerList();
+        renderCanvas();
+    };
+    function downloadCanvasImage() {
+        const link = document.createElement('a');
+        link.download = 'final_image.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+    downloadBtn.onclick = downloadCanvasImage;
+    // --- EXPORT ---
+    async function exportImage() {
+        downloadBtn.disabled = true;
+        showExportStatus('Creating final image...', 'processing');
+        try {
+            const fitted = getFittedImageBox(originalImg, canvas);
+            const response = await fetch('/export_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text_layers: textLayers,
+                    layer_visibility: layerVisibility,
+                    canvas_width: canvas.width,
+                    canvas_height: canvas.height,
+                    original_width: originalImg.naturalWidth,
+                    original_height: originalImg.naturalHeight,
+                    canvas_fitted_x: fitted.x,
+                    canvas_fitted_y: fitted.y,
+                    canvas_fitted_width: fitted.width,
+                    canvas_fitted_height: fitted.height
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showExportStatus('Image exported successfully!', 'success');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = result.download_url;
+                downloadLink.download = 'final_image.png';
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                setTimeout(() => {
+                    showExportStatus('✅ Image downloaded! Check your downloads folder.', 'success');
+                }, 1000);
+            } else {
+                showExportStatus(result.error || 'Failed to export image', 'error');
+            }
+        } catch (error) {
+            showExportStatus('Network error. Please try again.', 'error');
+        }
+        downloadBtn.disabled = false;
+    }
+    function showExportStatus(message, type) {
+        exportStatus.textContent = message;
+        exportStatus.className = `status ${type}`;
+        exportStatus.style.display = 'block';
+        if (type === 'success') {
+            setTimeout(() => { exportStatus.style.display = 'none'; }, 5000);
+        }
+    }
+    // --- DRAG TEXT LAYER ON CANVAS (relative to fitted image) ---
+    canvas.addEventListener('mousedown', function(e) {
+        if (!selectedLayer) return;
+        const layer = textLayers.find(l => l.id === selectedLayer);
+        if (!layer) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        // Use fitted image box
+        let imgBox = { x: 0, y: 0, width: canvas.width, height: canvas.height };
+        if (layerVisibility.original) {
+            const box = drawImageCentered(originalImg);
+            if (box) imgBox = box;
+        }
+        ctx.save();
+        ctx.font = `${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        const x = imgBox.x + (layer.x / 100) * imgBox.width;
+        const y = imgBox.y + (layer.y / 100) * imgBox.height;
+        const width = ctx.measureText(layer.text).width;
+        const height = layer.fontSize;
+        ctx.restore();
+        if (mx > x - width/2 && mx < x + width/2 && my > y - height/2 && my < y + height/2) {
+            dragging = true;
+            dragOffset.x = mx - x;
+            dragOffset.y = my - y;
+            dragImgBox = imgBox; // Save for mousemove
+        }
+    });
+    canvas.addEventListener('mousemove', function(e) {
+        if (!dragging || !selectedLayer) return;
+        const layer = textLayers.find(l => l.id === selectedLayer);
+        if (!layer) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const imgBox = dragImgBox || { x: 0, y: 0, width: canvas.width, height: canvas.height };
+        let newX = ((mx - dragOffset.x) - imgBox.x) / imgBox.width * 100;
+        let newY = ((my - dragOffset.y) - imgBox.y) / imgBox.height * 100;
+        newX = Math.max(0, Math.min(100, newX));
+        newY = Math.max(0, Math.min(100, newY));
+        layer.x = newX;
+        layer.y = newY;
+        renderLayerList();
+        renderCanvas();
+    });
+    window.addEventListener('mouseup', function() { dragging = false; });
+    // --- INIT DEFAULT LAYER ---
+    if (textLayers.length === 0) {
+        addTextBtn.click();
+    }
+    renderLayerList();
+    renderCanvas();
+    </script>
+</body>
+</html> 
