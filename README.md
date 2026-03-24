@@ -1,15 +1,16 @@
-# 🎨 Image Background Remover & Editor
+# 🎨 AddTeXT.io - Auto Insert Text Between Your Images
 
-A modern Flask web application that allows users to upload images, remove backgrounds using AI, and add editable text layers. Perfect for creating professional portraits, social media content, and marketing materials.
+A modern Flask web application that allows users to upload images, remove backgrounds using AI, add editable text layers, and export professional compositions. Perfect for creating portraits, social media content, and marketing materials.
 
 ## ✨ Features
 
-- **AI-Powered Background Removal**: Uses Remove.bg API for high-quality background removal
+- **AI-Powered Background Removal**: Uses rembg library for local background removal (no API key required)
 - **Layer Management**: Toggle between original image, background-removed image, and text layers
-- **Text Editor**: Add, edit, and style text with various fonts, sizes, and colors
+- **Advanced Text Editor**: Add, edit, and style text with various fonts, sizes, colors, and rotation
 - **Drag & Drop Interface**: Modern, responsive UI with drag-and-drop file upload
 - **Real-time Preview**: See changes instantly as you edit
 - **Session Management**: Save and load text content for each editing session
+- **Export Functionality**: Download your final composition as a PNG image
 - **Mobile Responsive**: Works perfectly on desktop and mobile devices
 
 ## 🚀 Quick Start
@@ -17,7 +18,6 @@ A modern Flask web application that allows users to upload images, remove backgr
 ### Prerequisites
 
 - Python 3.7 or higher
-- Remove.bg API key (free tier available)
 
 ### Installation
 
@@ -27,24 +27,16 @@ A modern Flask web application that allows users to upload images, remove backgr
 
    ```bash
    pip install -r requirements.txt
+   pip install rembg
    ```
 
-3. **Set up your Remove.bg API key**:
-
-   - Sign up at [remove.bg](https://www.remove.bg/api)
-   - Get your free API key
-   - Replace the API key in `app.py` line 15:
-     ```python
-     REMOVE_BG_API_KEY = 'your-api-key-here'
-     ```
-
-4. **Run the application**:
+3. **Run the application**:
 
    ```bash
    python app.py
    ```
 
-5. **Open your browser** and go to `http://localhost:5000`
+4. **Open your browser** and go to `http://localhost:5000`
 
 ## 📖 How to Use
 
@@ -56,19 +48,20 @@ A modern Flask web application that allows users to upload images, remove backgr
 
 ### 2. Edit in the Layer Editor
 
-- **Layer Controls**: Toggle visibility of original image, background-removed image, and text layer
+- **Layer Controls**: Toggle visibility of original image, background-removed image, and text layers
 - **Text Editor**:
   - Type your text in the text area
-  - Choose font size, family, and color
+  - Choose font size, family, color, and rotation
   - Apply bold/italic styling
   - Click "Apply Text" to see changes
 - **Text Positioning**: Drag the text layer to position it anywhere on the image
 
-### 3. Save Your Work
+### 3. Export Your Work
 
 - Text content is automatically saved as you type
 - Use "Save Text" to manually save your text
 - Use "Load Saved Text" to restore previously saved text
+- Click "Export Image" to download your final composition as a PNG file
 
 ## 🛠️ Technical Details
 
@@ -96,13 +89,14 @@ Tbw/
 - `GET /editor/<session_id>` - Open editor for specific session
 - `POST /save_text` - Save text content
 - `GET /get_text` - Load saved text content
+- `POST /export_image` - Export final composition as PNG
 - `GET /uploads/<path>` - Serve uploaded files
 
 ### Technologies Used
 
 - **Backend**: Flask (Python)
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Image Processing**: Remove.bg API, Pillow
+- **Image Processing**: rembg library, Pillow
 - **Styling**: Modern CSS with gradients and animations
 
 ## 🔧 Configuration
@@ -113,7 +107,6 @@ You can set these environment variables for production:
 
 ```bash
 export FLASK_SECRET_KEY="your-secret-key"
-export REMOVE_BG_API_KEY="your-remove-bg-api-key"
 ```
 
 ### Customization
@@ -145,14 +138,11 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
-## 📝 API Usage
+## 📝 Notes
 
-The Remove.bg API has usage limits:
-
-- **Free tier**: 50 images per month
-- **Paid plans**: Available for higher usage
-
-Monitor your usage at [remove.bg/api](https://www.remove.bg/api)
+- The application uses the `rembg` library for local background removal, which means no API key is required
+- Background removal is performed on your local machine, ensuring privacy
+- The first time you run the app, rembg may need to download AI models (this is automatic)
 
 ## 🤝 Contributing
 
@@ -172,9 +162,9 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **"Failed to remove background" error**
 
-- Check your Remove.bg API key is correct
-- Verify you have remaining API credits
-- Ensure the image file is valid and under 10MB
+- Ensure the rembg library is properly installed
+- Verify the image file is valid and under 10MB
+- Check that the image format is supported (PNG, JPG, JPEG, GIF, BMP)
 
 **Images not loading**
 
@@ -191,13 +181,12 @@ This project is open source and available under the [MIT License](LICENSE).
 If you encounter issues:
 
 1. Check the browser console for errors
-2. Verify all dependencies are installed
-3. Ensure your API key is valid
-4. Check the Flask application logs
+2. Verify all dependencies are installed (including rembg)
+3. Check the Flask application logs
 
 ## 🎯 Future Enhancements
 
-- [ ] Export final composition as image
+- [x] Export final composition as image
 - [ ] Multiple text layers
 - [ ] Image filters and effects
 - [ ] Undo/redo functionality
